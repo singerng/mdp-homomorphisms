@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import random
 
 class MDP(ABC):
 	# static class constant: https://stackoverflow.com/a/53417582
@@ -21,15 +22,23 @@ class MDP(ABC):
 	def transition(state, action):
 		raise NotImplementedError
 
-	def __init__(self, discount=0.9):
+	def __init__(self, discount=0.99):
 		self.discount = discount
 
-	def evaluate_policy(self, state, policy, n=1000):
+	def random_policy(self, state):
+		return random.randrange(self.NUM_ACTIONS)
+
+	def trajectory(self, state, policy, n=1000):
 		total = 0
+		trajectory = []
 
 		for i in range(n):
 			action = policy(state)
-			state = self.transition(state, action)
-			total += self.reward(state) * (self.discount ** i)
+			new_state = self.transition(state, action)
+			reward = self.reward(new_state)
 
-		return total
+			trajectory.append((state, action, reward))
+			state = new_state
+			total += reward * (self.discount ** i)
+
+		return total, trajectory

@@ -1,7 +1,6 @@
 from mdp import MDP
 from math import sin, cos
 import numpy as np
-import random
 
 class CartPoleMDP(MDP):
 	"""An implementation of the Cart Pole problem as a discretized
@@ -57,12 +56,7 @@ class CartPoleMDP(MDP):
 
 		return np.array([x, dx_dt, th, dth_dt])
 
-	@staticmethod
-	def random_policy(state):
-		return random.randrange(4)
-
-	@staticmethod
-	def naive_policy(state):
+	def naive_policy(self, state):
 		(x, dx_dt, th, dth_dt) = tuple(state)
 
 		if th < 0:
