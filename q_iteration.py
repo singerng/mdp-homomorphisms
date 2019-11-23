@@ -28,17 +28,20 @@ def Q_policy(mdp, model):
 		return b
 	return policy
 
-def fitted_q_iteration(mdp, stationary_policy, n=500, t=50):
+def fitted_q_iteration(mdp, stationary_policy, n=50, t=200):
 	initial_state = np.zeros(mdp.STATE_DIMS)
+	
 	_, trajectory = mdp.trajectory(initial_state, stationary_policy, n=t)
-
 	X = np.stack(list(map(lambda x: stack_state_action(mdp, x[0], x[1]),
 		trajectory[:-1])))
 	R = np.array(list(map(lambda x: x[2], trajectory[:-1])))
+	print(R)
 
-	svr = SVR(kernel='poly', C=100, gamma='auto', degree=3, epsilon=.1,
-               coef0=1)
+	svr = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 	model = None
+
+	b = 0
+	b_model = None
 
 	for i in range(n):
 		best_actions = []
@@ -49,8 +52,13 @@ def fitted_q_iteration(mdp, stationary_policy, n=500, t=50):
 			best_actions.append(m)
 
 		y = R + mdp.discount * np.array(best_actions)
+		svr = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 		model = svr.fit(X, y)
 
-		print(mdp.trajectory(initial_state, Q_policy(mdp, model), n=t)[0])
+		score = mdp.trajectory(initial_state, Q_policy(mdp, model), n=t)[0]
 
-	return Q_policy(mdp, model)
+		if score > b:
+			b = score
+			b_model = model
+
+	return Q_policy(mdp, b_model)

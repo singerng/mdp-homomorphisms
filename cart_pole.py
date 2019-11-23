@@ -25,6 +25,7 @@ class CartPoleMDP(MDP):
 	big_F = 10
 	small_F = 1
 	h = 2.4  # maximum allowed abs(x)
+	# h = .5
 	r = 0.209  # maximum allowed abs(th)
 	t = 0.02  # time step size
 

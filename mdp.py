@@ -22,7 +22,7 @@ class MDP(ABC):
 	def transition(state, action):
 		raise NotImplementedError
 
-	def __init__(self, discount=0.99):
+	def __init__(self, discount=0.999):
 		self.discount = discount
 
 	def random_policy(self, state):
@@ -34,11 +34,10 @@ class MDP(ABC):
 
 		for i in range(n):
 			action = policy(state)
-			new_state = self.transition(state, action)
-			reward = self.reward(new_state)
+			reward = self.reward(state)
 
 			trajectory.append((state, action, reward))
-			state = new_state
 			total += reward * (self.discount ** i)
+			state = self.transition(state, action)
 
 		return total, trajectory
