@@ -2,6 +2,7 @@ from cart_pole import CartPoleMDP
 from q_iteration import fitted_q_iteration
 import numpy as np
 import random
+import torch
 
 from matplotlib import pyplot as plt
 
@@ -18,7 +19,7 @@ def plot_trajectory(trajectory):
 	plt.show()
 
 if __name__ == "__main__":
-	state = np.array([0,0,0,0])
+	state = torch.tensor([0.0,0.0,0.0,0.0])
 	mdp = CartPoleMDP()
 	random, random_t = mdp.trajectory(state, mdp.random_policy)
 	naive, naive_t = mdp.trajectory(state, mdp.naive_policy)

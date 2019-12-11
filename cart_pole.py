@@ -1,6 +1,7 @@
 from mdp import MDP
 from math import sin, cos
 import numpy as np
+import torch
 
 class CartPoleMDP(MDP):
 	"""An implementation of the Cart Pole problem as a discretized
@@ -41,21 +42,22 @@ class CartPoleMDP(MDP):
 		return [-cls.big_F, -cls.small_F, cls.small_F, cls.big_F][action]
 
 	def transition(cls, state, action):
-		(x, dx_dt, th, dth_dt) = tuple(state)
-		F = cls.force(action)
+         (x, dx_dt, th, dth_dt) = tuple(state)
+         F = cls.force(action)
 
-		d2th_dt2 = (cls.g * sin(th) + cos(th) * \
-			(-F - cls.mp * cls.l * dth_dt**2 * sin(th)) / (cls.mc + cls.mp)) / \
-			(cls.l * (4/3 - cls.mp * cos(th)**2 / (cls.mc + cls.mp)))
-		d2x_dt2 = (F + cls.mp * cls.l * (dth_dt**2 * sin(th) - d2th_dt2 * cos(th))) / \
-			(cls.mc + cls.mp)
+         d2th_dt2 = (cls.g * sin(th) + cos(th) * \
+		(-F - cls.mp * cls.l * dth_dt**2 * sin(th)) / (cls.mc + cls.mp)) / \
+		(cls.l * (4/3 - cls.mp * cos(th)**2 / (cls.mc + cls.mp)))
+         d2x_dt2 = (F + cls.mp * cls.l * (dth_dt**2 * sin(th) - d2th_dt2 * cos(th))) / \
+		(cls.mc + cls.mp)
 
-		x += cls.t * dx_dt
-		dx_dt += cls.t * d2x_dt2
-		th += cls.t * dth_dt
-		dth_dt += cls.t * d2th_dt2
+         x = 4
+         x += cls.t * dx_dt
+         dx_dt += cls.t * d2x_dt2
+         th += cls.t * dth_dt
+         dth_dt += cls.t * d2th_dt2
 
-		return np.array([x, dx_dt, th, dth_dt])
+         return torch.tensor([x, dx_dt, th, dth_dt])
 
 	def naive_policy(self, state):
 		(x, dx_dt, th, dth_dt) = tuple(state)
