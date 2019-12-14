@@ -19,6 +19,10 @@ class MDPHomomorphism(ABC):
 			return policy(self.image(state))
 		return lifted_policy
 
+	def perturb(self, st_dev):
+		for p in self.params:
+			p += torch.tensor(np.normal.random(scale=st_dev, size=p.size), dtype=torch.float32)
+
 	def sample_cost(self, sample):
 		s, a, s1, r = sample
 		s_ = self.image(s)
@@ -42,9 +46,7 @@ class MDPHomomorphism(ABC):
 def filter_homomorphism(particles, num_iters=15, num_samples=2000, step_size=1e-1, tau=0.5):
 	print("Searching for homomorphism...")
 
-	initial_state = torch.zeros(particles[0].orig_mdp.STATE_DIMS)
-
-	samples = [particles[0].im_mdp.sample() for _ in range(num_samples)]
+	samples = [particles[0].orig_mdp.sample() for _ in range(num_samples)]
 
 	best_p = float('inf')
 	best_h = None
