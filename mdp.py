@@ -1,5 +1,9 @@
 from abc import ABC, abstractmethod
 import random
+import numpy as np
+
+def perturb(x, l):
+	return np.random.normal(x, l * abs(x))
 
 class MDP(ABC):
 	# static class constant: https://stackoverflow.com/a/53417582
@@ -19,7 +23,7 @@ class MDP(ABC):
 		raise NotImplementedError
 	
 	@abstractmethod
-	def transition(state, action):
+	def transition(self, state, action):
 		raise NotImplementedError
 
 	def __init__(self, discount=0.999):
@@ -27,6 +31,14 @@ class MDP(ABC):
 
 	def random_policy(self, state):
 		return random.randrange(self.NUM_ACTIONS)
+
+	def sample(self):
+		s = self.random_state()
+		a = self.random_policy(s)
+		s1 = self.transition(s, a)
+		r = self.reward(s)
+
+		return (s, a, s1, r)
 
 	def trajectory(self, state, policy, n=1000):
 		total = 0

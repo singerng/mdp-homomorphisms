@@ -1,12 +1,14 @@
 from cart_pole import CartPoleMDP
 from q_iteration import fitted_q_iteration
+from homomorphism import AffineHomomorphism, QuadraticHomomorphism
+
 import numpy as np
 import random
 import torch
 
 from matplotlib import pyplot as plt
 
-random.seed(1337)
+# random.seed(1339)
 
 def plot_trajectory(trajectory):
 	xs = np.array(list(map(lambda x: x[0][0], trajectory)))
@@ -19,12 +21,23 @@ def plot_trajectory(trajectory):
 	plt.show()
 
 if __name__ == "__main__":
-	state = torch.tensor([0.0,0.0,0.0,0.0])
+	state = torch.tensor([0.0, 0.0, 0.0, 0.0])
 	mdp = CartPoleMDP()
-	random, random_t = mdp.trajectory(state, mdp.random_policy)
-	naive, naive_t = mdp.trajectory(state, mdp.naive_policy)
+	# h = AffineHomomorphism(mdp, mdp)
+	# h.optimize()
+	# random.seed(1339)
 
-	fitted_policy = fitted_q_iteration(mdp, mdp.random_policy)
-	fitted, fitted_t = mdp.trajectory(state, fitted_policy)
-	print(fitted)
-	plot_trajectory(fitted_t)
+	best_fitted = float('inf')
+
+	for _ in range(10):
+		fitted_policy = fitted_q_iteration(mdp, mdp.random_policy)
+		fitted, fitted_t = mdp.trajectory(state, fitted_policy)
+		if fitted < best_fitted:
+			best_fitted = fitted
+	print(best_fitted)
+
+	# lifted_policy = h.lift(fitted_policy)
+	# lifted, lifted_t = mdp.trajectory(state, lifted_policy)
+
+	# print(lifted)
+	# plot_trajectory(lifted_t)
