@@ -16,7 +16,7 @@ def plot_trajectory(trajectory):
 	plt.legend()
 	plt.show()
 
-def find_optimal_policy(mdp, num_iters=15):
+def find_optimal_policy(mdp, num_iters=10):
 	print("Searching for optimal policy...")
 	start_state = torch.tensor([0.0, 0.0, 0.0, 0.0])
 
@@ -35,14 +35,17 @@ def find_optimal_policy(mdp, num_iters=15):
 	return best_fitted_policy
 
 
-def evaluate_policies(mdp, policies, num_samples=100):
+def evaluate_policies(mdp, *args, num_samples=100):
 	samples = [mdp.sample()[0] for _ in range(num_samples)]
 
-	values = [0 for _ in range(len(policies))]
+	values = [0 for _ in range(len(args))]
 
-	for i, policy in enumerate(policies):
+	for i, (policy, state_fn, mdp_) in enumerate(args):
 		for sample in samples:
-			value, _ = mdp.trajectory(sample, policy)
+			if state_fn:
+				sample = state_fn(sample)
+
+			value, _ = mdp_.trajectory(sample, policy)
 			values[i] += value / num_samples
 
 	return values
@@ -61,4 +64,5 @@ if __name__ == "__main__":
 	orig_policy = find_optimal_policy(orig_mdp)
 	lifted_policy = h.lift(im_policy)
 
-	print(evaluate_policies(orig_mdp, [im_policy, orig_policy, lifted_policy]))
+	print(evaluate_policies(orig_mdp, (im_policy, None, orig_mdp), (orig_policy, None, orig_mdp),
+								(lifted_policy, None, orig_mdp), (im_policy, h.image, im_mdp)))

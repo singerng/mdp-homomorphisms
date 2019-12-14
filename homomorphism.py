@@ -39,7 +39,7 @@ class MDPHomomorphism(ABC):
 
 # def optimize_homomorphism(homomorphism, num_iters, num_samples=200):
 
-def filter_homomorphism(particles, num_iters=30, num_samples=2000, step_size=1e-1, tau=0.5):
+def filter_homomorphism(particles, num_iters=15, num_samples=2000, step_size=1e-1, tau=0.5):
 	print("Searching for homomorphism...")
 
 	initial_state = torch.zeros(particles[0].orig_mdp.STATE_DIMS)
@@ -96,7 +96,7 @@ class AffineHomomorphism(MDPHomomorphism):
 class QuadraticHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		A = kwargs.get('A', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+		A = kwargs.get('A', torch.tensor(np.random.normal(scale=0.25,
 												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
 		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
 												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
