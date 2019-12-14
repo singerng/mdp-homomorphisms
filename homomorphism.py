@@ -34,7 +34,7 @@ class MDPHomomorphism(ABC):
 			C += self.sample_cost(samples[random.randint(0, len(samples)-1)])
 		return C / num_subsamples
 
-	def optimize(self, num_iters=50, num_samples=2000):
+	def optimize(self, num_iters=1000, num_samples=2000):
 		initial_state = torch.zeros(self.orig_mdp.STATE_DIMS)
 
 		samples = [self.im_mdp.sample() for _ in range(num_samples)]
@@ -66,7 +66,7 @@ class MDPHomomorphism(ABC):
 class AffineHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		B = torch.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS, requires_grad=True)
+		B = torch.zeros(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS, requires_grad=True)
 		c = torch.zeros(self.orig_mdp.STATE_DIMS, requires_grad=True)
 		self.params = [B, c]
 
