@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 
 
 class MDPHomomorphism(ABC):
-	def __init__(self, orig_mdp, im_mdp):
+	def __init__(self, orig_mdp, im_mdp, **kwargs):
 		self.orig_mdp = orig_mdp
 		self.im_mdp = im_mdp
 
@@ -34,41 +34,61 @@ class MDPHomomorphism(ABC):
 			C += self.sample_cost(samples[random.randint(0, len(samples)-1)])
 		return C / num_subsamples
 
-	def optimize(self, num_iters=1000, num_samples=2000):
-		initial_state = torch.zeros(self.orig_mdp.STATE_DIMS)
+	def detach(self):
+		self.params = list(map(lambda x: x.detach(), self.params))
 
-		samples = [self.im_mdp.sample() for _ in range(num_samples)]
-		
-		optimizer = torch.optim.Adam(self.params)
-		best_p = 10000000
-		best_params = None
+# def optimize_homomorphism(homomorphism, num_iters, num_samples=200):
 
-		for i in range(num_iters):
-			optimizer.zero_grad()
+def filter_homomorphism(particles, num_iters=30, num_samples=2000, step_size=1e-1, tau=0.5):
+	print("Searching for homomorphism...")
 
-			t = random.randint(0, num_samples-2)
-			C = self.sample_cost(samples[t])
+	initial_state = torch.zeros(particles[0].orig_mdp.STATE_DIMS)
 
-			p = self.population_cost(samples)
-			print(i, p)
-			if p < best_p:
-				best_p = p
-				best_params = list(map(lambda x: x.clone(), self.params))
-			
+	samples = [particles[0].im_mdp.sample() for _ in range(num_samples)]
+
+	best_p = float('inf')
+	best_h = None
+
+	for i in range(num_iters):
+		# perform stochastic updates
+		for h in particles:
+			C = h.sample_cost(samples[random.randint(0, num_samples-2)])
 			C.backward()
 
-			optimizer.step()
+			with torch.no_grad():
+				for p in h.params:
+					p -= step_size * p.grad
+					p.grad.data.zero_()
 
-		print(best_p)
-		self.params = list(map(lambda x: x.detach(), best_params))
+		# resample according to cost functions
+		probs = []
+		for h in particles:
+			p = h.population_cost(samples)
+			if best_p > p:
+				best_p = p
+				best_h = h.clone()
+				print("Found better cost:", best_p, "on iteration", i)
+			probs.append(np.exp(-p.detach().numpy() / tau))
+		probs = np.array(probs) / sum(probs)
+
+		particles = list(np.random.choice(particles, size=len(particles), p=probs))
+
+	print()
+
+	return best_h
 
 
 class AffineHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		B = torch.zeros(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS, requires_grad=True)
-		c = torch.zeros(self.orig_mdp.STATE_DIMS, requires_grad=True)
+		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+		c = kwargs.get('c', torch.tensor(np.random.normal(scale=0.25,
+												size=(self.orig_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
 		self.params = [B, c]
+
+	def clone(self):
+		return AffineHomomorphism(self.orig_mdp, self.im_mdp, B=self.params[0], c=self.params[1])
 
 	def image(self, state):
 		return torch.matmul(self.params[0], state) + self.params[1]
@@ -76,9 +96,12 @@ class AffineHomomorphism(MDPHomomorphism):
 class QuadraticHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		A = torch.zeros(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS, requires_grad=True)
-		B = torch.zeros(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS, requires_grad=True)
-		c = torch.zeros(self.orig_mdp.STATE_DIMS, requires_grad=True)
+		A = kwargs.get('A', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+		c = kwargs.get('c', torch.tensor(np.random.normal(scale=0.25,
+												size=(self.orig_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
 		self.params = [A, B, c]
 
 	def image(self, state):

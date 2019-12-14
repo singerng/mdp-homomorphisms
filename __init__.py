@@ -1,14 +1,12 @@
 from cart_pole import CartPoleMDP
 from q_iteration import fitted_q_iteration
-from homomorphism import AffineHomomorphism, QuadraticHomomorphism
+from homomorphism import AffineHomomorphism, filter_homomorphism
 
 import numpy as np
 import random
 import torch
 
 from matplotlib import pyplot as plt
-
-# random.seed(1339)
 
 def plot_trajectory(trajectory):
 	xs = np.array(list(map(lambda x: x[0][0], trajectory)))
@@ -18,23 +16,49 @@ def plot_trajectory(trajectory):
 	plt.legend()
 	plt.show()
 
-if __name__ == "__main__":
-	state = torch.tensor([0.0, 0.0, 0.0, 0.0])
+def find_optimal_policy(mdp, num_iters=15):
+	print("Searching for optimal policy...")
+	start_state = torch.tensor([0.0, 0.0, 0.0, 0.0])
 
-	mdp = CartPoleMDP()
-
-	h = AffineHomomorphism(mdp, mdp)
-	h.optimize()
-
-	best_fitted = 0
-	for _ in range(15):
+	best_fitted = float('-inf')
+	for _ in range(num_iters):
 		fitted_policy = fitted_q_iteration(mdp, mdp.random_policy)
-		fitted, fitted_t = mdp.trajectory(state, fitted_policy)
+		fitted, fitted_t = mdp.trajectory(start_state, fitted_policy)
+		print("Found fitted value:", fitted)
 		if fitted > best_fitted:
 			best_fitted = fitted
+			best_fitted_policy = fitted_policy
 
-	# lifted_policy = h.lift(fitted_policy)
-	# lifted, lifted_t = mdp.trajectory(state, lifted_policy)
+	print("Best value:", best_fitted)
+	print()
 
-	# print(lifted)
-	# plot_trajectory(lifted_t)
+	return best_fitted_policy
+
+
+def evaluate_policies(mdp, policies, num_samples=100):
+	samples = [mdp.sample()[0] for _ in range(num_samples)]
+
+	values = [0 for _ in range(len(policies))]
+
+	for i, policy in enumerate(policies):
+		for sample in samples:
+			value, _ = mdp.trajectory(sample, policy)
+			values[i] += value / num_samples
+
+	return values
+
+
+if __name__ == "__main__":
+	orig_mdp = CartPoleMDP(l=.25)  # perturbed cart-pole
+	im_mdp = CartPoleMDP()
+
+	# use particle filter to find affine homomorphism
+	particles = [AffineHomomorphism(orig_mdp, im_mdp) for _ in range(100)]
+	h = filter_homomorphism(particles)
+	h.detach()
+
+	im_policy = find_optimal_policy(im_mdp)
+	orig_policy = find_optimal_policy(orig_mdp)
+	lifted_policy = h.lift(im_policy)
+
+	print(evaluate_policies(orig_mdp, [im_policy, orig_policy, lifted_policy]))

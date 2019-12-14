@@ -23,10 +23,10 @@ class CartPoleMDP(MDP):
 	NUM_ACTIONS = 4
 
 	def __init__(self, *args, **kwargs):
-		l = kwargs.get('l', 0)
+		l = kwargs.pop('l', 0)
 		super().__init__(*args, **kwargs)
 
-		self.g = perturb(-9.81, l)
+		self.g = -9.81
 		self.mc = perturb(1, l)
 		self.mp = perturb(.1, l)
 		self.l = perturb(.5, l)
@@ -39,7 +39,7 @@ class CartPoleMDP(MDP):
 	def reward(self, state):
 		allowed_x = abs(state[0]) <= self.h
 		allowed_th = abs(state[2]) <= self.r
-		return int(allowed_x and allowed_th)
+		return 1 if allowed_x and allowed_th else 0
 
 	def force(self, action):
 		return [-self.big_F, -self.small_F, self.small_F, self.big_F][action]

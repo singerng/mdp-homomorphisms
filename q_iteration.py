@@ -31,7 +31,6 @@ def fitted_q_iteration(mdp, stationary_policy, num_iters=100, num_samples=200):
 	X = torch.stack(list(map(lambda x: stack_state_action(mdp, x[0], x[1]),
 		trajectory[:-1])))
 	R = torch.tensor(list(map(lambda x: x[2], trajectory[:-1])))
-	print(R)
 
 	svr = SVR(kernel='rbf', C=100, gamma=0.1, epsilon=.1)
 	model = None
