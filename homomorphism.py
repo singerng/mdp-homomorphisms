@@ -106,5 +106,8 @@ class QuadraticHomomorphism(MDPHomomorphism):
 												size=(self.orig_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
 		self.params = [A, B, c]
 
+	def clone(self):
+		return AffineHomomorphism(self.orig_mdp, self.im_mdp, A=self.params[0], B=self.params[1], c=self.params[2])
+
 	def image(self, state):
 		return torch.matmul(self.params[0], state**2) + torch.matmul(self.params[1], state) + self.params[2]
