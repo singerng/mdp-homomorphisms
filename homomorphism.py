@@ -83,10 +83,10 @@ def filter_homomorphism(particles, num_iters=15, num_samples=2000, step_size=1e-
 class AffineHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
-												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.im_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+												size=(self.im_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
 		c = kwargs.get('c', torch.tensor(np.random.normal(scale=0.25,
-												size=(self.orig_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
+												size=(self.im_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
 		self.params = [B, c]
 
 	def clone(self):
@@ -99,11 +99,11 @@ class QuadraticHomomorphism(MDPHomomorphism):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		A = kwargs.get('A', torch.tensor(np.random.normal(scale=0.25,
-												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
-		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
-												size=(self.orig_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+												size=(self.im_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
+		B = kwargs.get('B', torch.tensor(np.random.normal(loc=np.eye(self.im_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS), scale=0.25,
+												size=(self.im_mdp.STATE_DIMS, self.orig_mdp.STATE_DIMS)), dtype=torch.float32, requires_grad=True))
 		c = kwargs.get('c', torch.tensor(np.random.normal(scale=0.25,
-												size=(self.orig_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
+												size=(self.im_mdp.STATE_DIMS,)), dtype=torch.float32, requires_grad=True))
 		self.params = [A, B, c]
 
 	def clone(self):
