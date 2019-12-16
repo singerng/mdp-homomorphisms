@@ -51,7 +51,40 @@ def evaluate_policies(mdp, *args, num_samples=100):
 	return values
 
 
-if __name__ == "__main__":
+def test_perturb_homomorphism():
+	orig_mdp = CartPoleMDP(l=.25)  # perturbed cart-pole
+	im_mdp = CartPoleMDP()
+
+	# use particle filter to find affine homomorphism
+	particles = [AffineHomomorphism(orig_mdp, im_mdp) for _ in range(100)]
+	h = filter_homomorphism(particles)
+	h.detach()
+
+	im_policy = find_optimal_policy(im_mdp)
+
+	x = []
+	y = []
+
+	homomorphisms = [h.clone() for _ in range(10)]
+	samples = [orig_mdp.sample() for _ in range(100)]
+	policies = []
+
+	for i, h in enumerate(homomorphisms):
+		h.perturb(.1)
+		policies.append(h.lift(im_policy))
+		cost = float(h.population_cost(samples))
+		print("Cost ", i, cost)
+		x.append(cost)
+
+	args = list(map(lambda p: (p, None, orig_mdp), policies))
+	y = evaluate_policies(orig_mdp, *args, num_samples=15)
+
+	print(x, y)
+	plt.scatter(x, y)
+	plt.show()
+
+
+def main_test():
 	orig_mdp = CartPoleMDP(l=.25)  # perturbed cart-pole
 	im_mdp = CartPoleMDP()
 
@@ -66,3 +99,6 @@ if __name__ == "__main__":
 
 	print(evaluate_policies(orig_mdp, (im_policy, None, orig_mdp), (orig_policy, None, orig_mdp),
 								(lifted_policy, None, orig_mdp), (im_policy, h.image, im_mdp)))
+
+if __name__ == "__main__":
+	main_test()

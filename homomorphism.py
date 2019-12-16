@@ -21,7 +21,7 @@ class MDPHomomorphism(ABC):
 
 	def perturb(self, st_dev):
 		for p in self.params:
-			p += torch.tensor(np.normal.random(scale=st_dev, size=p.size), dtype=torch.float32)
+			p += torch.tensor(np.random.normal(scale=st_dev, size=p.size()), dtype=torch.float32)
 
 	def sample_cost(self, sample):
 		s, a, s1, r = sample
@@ -90,7 +90,7 @@ class AffineHomomorphism(MDPHomomorphism):
 		self.params = [B, c]
 
 	def clone(self):
-		return AffineHomomorphism(self.orig_mdp, self.im_mdp, B=self.params[0], c=self.params[1])
+		return AffineHomomorphism(self.orig_mdp, self.im_mdp, B=self.params[0].clone(), c=self.params[1].clone())
 
 	def image(self, state):
 		return torch.matmul(self.params[0], state) + self.params[1]
@@ -107,7 +107,7 @@ class QuadraticHomomorphism(MDPHomomorphism):
 		self.params = [A, B, c]
 
 	def clone(self):
-		return AffineHomomorphism(self.orig_mdp, self.im_mdp, A=self.params[0], B=self.params[1], c=self.params[2])
+		return AffineHomomorphism(self.orig_mdp, self.im_mdp, A=self.params[0].clone(), B=self.params[1].clone(), c=self.params[2].clone())
 
 	def image(self, state):
 		return torch.matmul(self.params[0], state**2) + torch.matmul(self.params[1], state) + self.params[2]
